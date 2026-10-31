@@ -671,7 +671,7 @@ export const StudentPage = () => {
                 </svg>
               </div>
               <div className="sp-logo-text">
-                <div className="sp-logo-name">Laksh Library</div>
+                <div className="sp-logo-name">Guru Ji Library</div>
                 <div className="sp-logo-sub">Student Directory</div>
               </div>
             </div>

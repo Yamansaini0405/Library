@@ -1,15 +1,41 @@
 import React, { useState, useEffect } from 'react';
 
 const FEE_STATUS = ['PAID', 'UNPAID'];
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 9 }, (_, index) => currentYear - 4 + index);
 
 export const StudentForm = ({ student, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', seatNo: '', totalFee: '', status: 'PAID',
+    name: '',
+    email: '',
+    phone: '',
+    seatNo: '',
+    totalFee: '',
+    paymentMonth: String(new Date().getMonth() + 1),
+    paymentYear: String(currentYear),
+    status: 'PAID',
   });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (student) setFormData(student);
+    if (student) {
+      setFormData({
+        ...student,
+        name: student.name || '',
+        email: student.email || '',
+        phone: student.phone || '',
+        seatNo: student.seatNo ?? '',
+        totalFee: student.totalFee ?? student.monthlyFee ?? '',
+        paymentMonth: String(student.paymentMonth || new Date().getMonth() + 1),
+        paymentYear: String(student.paymentYear || currentYear),
+        status: student.paymentStatus || student.status || 'UNPAID',
+      });
+    }
   }, [student]);
 
   const validateForm = () => {
@@ -43,7 +69,20 @@ export const StudentForm = ({ student, onSubmit, onCancel, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    onSubmit({ ...formData, seatNo: parseInt(formData.seatNo), totalFee: parseFloat(formData.totalFee) });
+
+    const paymentMonth = Number(formData.paymentMonth || new Date().getMonth() + 1);
+    const paymentYear = Number(formData.paymentYear || currentYear);
+
+    onSubmit({
+      ...formData,
+      seatNo: parseInt(formData.seatNo, 10),
+      totalFee: parseFloat(formData.totalFee),
+      monthlyFee: parseFloat(formData.totalFee),
+      paymentMonth,
+      paymentYear,
+      paymentStatus: formData.status,
+      status: formData.status,
+    });
   };
 
   return (
@@ -85,8 +124,15 @@ export const StudentForm = ({ student, onSubmit, onCancel, isLoading }) => {
           gap: 16px;
         }
 
+        .sf-grid-3 {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+        }
+
         @media (max-width: 640px) {
-          .sf-grid-2 { grid-template-columns: 1fr; }
+          .sf-grid-2,
+          .sf-grid-3 { grid-template-columns: 1fr; }
         }
 
         .sf-field {
@@ -271,6 +317,7 @@ export const StudentForm = ({ student, onSubmit, onCancel, isLoading }) => {
                 type="tel" name="phone" value={formData.phone} onChange={handleChange}
                 className={`sf-input${errors.phone ? ' has-error' : ''}`}
                 placeholder="0134368276" disabled={isLoading}
+                maxLength={10}
               />
               {errors.phone && <div className="sf-error">· {errors.phone}</div>}
             </div>
@@ -291,7 +338,7 @@ export const StudentForm = ({ student, onSubmit, onCancel, isLoading }) => {
               {errors.seatNo && <div className="sf-error">· {errors.seatNo}</div>}
             </div>
             <div className="sf-field">
-              <label className="sf-label">Subscription Fee ($) <span>*</span></label>
+              <label className="sf-label">Monthly Fee (₨) <span>*</span></label>
               <input
                 type="number" name="totalFee" value={formData.totalFee} onChange={handleChange}
                 step="0.01"
@@ -302,16 +349,42 @@ export const StudentForm = ({ student, onSubmit, onCancel, isLoading }) => {
             </div>
           </div>
 
-          <div className="sf-field" style={{ marginTop: '16px' }}>
-            <label className="sf-label">Payment Status <span>*</span></label>
-            <select
-              name="status" value={formData.status} onChange={handleChange}
-              className="sf-select" disabled={isLoading}
-            >
-              {FEE_STATUS.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+          <div className="sf-grid-3" style={{ marginTop: '16px' }}>
+            <div className="sf-field">
+              <label className="sf-label">Month <span>*</span></label>
+              <select
+                name="paymentMonth" value={formData.paymentMonth} onChange={handleChange}
+                className="sf-select" disabled={isLoading}
+              >
+                {MONTHS.map((month, index) => (
+                  <option key={month} value={String(index + 1)}>{month}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sf-field">
+              <label className="sf-label">Year <span>*</span></label>
+              <select
+                name="paymentYear" value={formData.paymentYear} onChange={handleChange}
+                className="sf-select" disabled={isLoading}
+              >
+                {YEAR_OPTIONS.map(year => (
+                  <option key={year} value={String(year)}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sf-field">
+              <label className="sf-label">Payment Status <span>*</span></label>
+              <select
+                name="status" value={formData.status} onChange={handleChange}
+                className="sf-select" disabled={isLoading}
+              >
+                {FEE_STATUS.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

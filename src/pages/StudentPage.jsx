@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStudents, deleteStudent } from '../services/api';
-import { StudentCard } from '../components/StudentCard';
 import { useAuth } from '../context/AuthContext';
 
 export const StudentPage = () => {
@@ -39,19 +38,24 @@ export const StudentPage = () => {
     }
   };
 
+  const handleRowClick = (studentId) => {
+    navigate(`/students/${studentId}`);
+  };
+
   const handleLogout = () => { logout(); navigate('/login'); };
 
   const filtered = students
     .filter(s => filter === 'ALL' || s.status === filter)
     .filter(s =>
       !search ||
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.email.toLowerCase().includes(search.toLowerCase())
+      s.name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.email?.toLowerCase().includes(search.toLowerCase()) ||
+      String(s.seatNo).includes(search)
     );
 
   const paidCount = students.filter(s => s.status === 'PAID').length;
   const unpaidCount = students.filter(s => s.status === 'UNPAID').length;
-  const totalRevenue = students.filter(s => s.status === 'PAID').reduce((a, s) => a + s.totalFee, 0);
+  const totalRevenue = students.filter(s => s.status === 'PAID').reduce((a, s) => a + (Number(s.totalFee) || 0), 0);
 
   return (
     <>
@@ -79,7 +83,6 @@ export const StudentPage = () => {
           pointer-events: none;
         }
 
-        /* ── Header ── */
         .sp-header {
           background: rgba(10,14,20,0.9);
           border-bottom: 1px solid rgba(240,230,208,0.08);
@@ -116,8 +119,6 @@ export const StudentPage = () => {
           color: #d4a350;
           background: rgba(212,163,80,0.06);
         }
-
-        .sp-logo-text {}
 
         .sp-logo-name {
           font-family: 'Playfair Display', serif;
@@ -162,7 +163,6 @@ export const StudentPage = () => {
           background: rgba(239,68,68,0.05);
         }
 
-        /* ── Stats Banner ── */
         .sp-stats {
           background: #0a0e14;
           border-bottom: 1px solid rgba(240,230,208,0.07);
@@ -174,6 +174,7 @@ export const StudentPage = () => {
           padding: 0 32px;
           display: flex;
           gap: 0;
+          flex-wrap: wrap;
         }
 
         .stat-cell {
@@ -210,7 +211,6 @@ export const StudentPage = () => {
           margin-top: 3px;
         }
 
-        /* ── Main ── */
         .sp-main {
           max-width: 1280px;
           margin: 0 auto;
@@ -321,7 +321,6 @@ export const StudentPage = () => {
           box-shadow: 0 6px 24px rgba(212,163,80,0.35);
         }
 
-        /* ── Error ── */
         .sp-error {
           background: rgba(239,68,68,0.07);
           border: 1px solid rgba(239,68,68,0.2);
@@ -349,7 +348,6 @@ export const StudentPage = () => {
 
         .sp-error-close:hover { color: #f87171; }
 
-        /* ── Loading ── */
         .sp-loading {
           display: flex;
           flex-direction: column;
@@ -379,7 +377,6 @@ export const StudentPage = () => {
           color: rgba(240,230,208,0.3);
         }
 
-        /* ── Empty ── */
         .sp-empty {
           border: 1px dashed rgba(240,230,208,0.1);
           border-radius: 6px;
@@ -437,46 +434,135 @@ export const StudentPage = () => {
           border-color: rgba(212,163,80,0.5);
         }
 
-        /* ── Grid ── */
-        .sp-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 20px;
+        .sp-table-wrap {
+          background: rgba(15,20,28,0.7);
+          border: 1px solid rgba(240,230,208,0.08);
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 20px 48px rgba(0,0,0,0.2);
         }
 
-        .sp-card-wrap {
-          position: relative;
+        .sp-table {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
         }
 
-        .sp-delete-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(10,14,20,0.7);
-          backdrop-filter: blur(2px);
-          z-index: 10;
-          border-radius: 6px;
-          display: flex;
+        .sp-table th,
+        .sp-table td {
+          padding: 16px 14px;
+          text-align: left;
+          border-bottom: 1px solid rgba(240,230,208,0.07);
+          vertical-align: middle;
+        }
+
+        .sp-table th {
+          background: rgba(255,255,255,0.02);
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: rgba(240,230,208,0.35);
+        }
+
+        .sp-table td {
+          font-size: 14px;
+          color: #f0e6d0;
+        }
+
+        .student-name {
+          font-weight: 600;
+          color: #f7f1e5;
+        }
+
+        .student-email {
+          color: rgba(240,230,208,0.6);
+          font-size: 12px;
+        }
+
+        .sp-status {
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-        }
-
-        .sp-delete-inner {
-          background: #0f141c;
-          border: 1px solid rgba(240,230,208,0.1);
-          border-radius: 4px;
-          padding: 10px 16px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .sp-delete-inner span {
+          min-width: 82px;
+          padding: 6px 10px;
+          border-radius: 999px;
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
+          border: 1px solid;
+        }
+
+        .sp-status.paid {
+          color: #4ade80;
+          background: rgba(74,222,128,0.08);
+          border-color: rgba(74,222,128,0.25);
+        }
+
+        .sp-status.unpaid {
+          color: #fca5a5;
+          background: rgba(248,113,113,0.08);
+          border-color: rgba(248,113,113,0.25);
+        }
+
+        .payment-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          background: rgba(212,163,80,0.08);
+          color: #d4a350;
+          border: 1px solid rgba(212,163,80,0.2);
+        }
+
+        .table-row {
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .table-row:hover {
+          background: rgba(212,163,80,0.04);
+        }
+
+        .table-actions {
+          display: flex;
+          gap: 8px;
+          justify-content: flex-start;
+        }
+
+        .icon-btn {
+          width: 32px;
+          height: 32px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          border: 1px solid rgba(240,230,208,0.1);
+          background: rgba(255,255,255,0.02);
+          color: rgba(240,230,208,0.5);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+          transform: translateY(-1px);
+        }
+
+        .icon-btn.edit:hover {
+          border-color: rgba(212,163,80,0.3);
+          color: #d4a350;
+          background: rgba(212,163,80,0.06);
+        }
+
+        .icon-btn.delete:hover {
+          border-color: rgba(239,68,68,0.3);
           color: #f87171;
+          background: rgba(239,68,68,0.06);
         }
 
         .result-count {
@@ -493,10 +579,88 @@ export const StudentPage = () => {
           color: #d4a350;
           font-style: normal;
         }
+
+        @media (max-width: 900px) {
+          .sp-header-inner,
+          .sp-stats-inner,
+          .sp-main {
+            padding-left: 18px;
+            padding-right: 18px;
+          }
+
+          .sp-table-wrap {
+            overflow-x: auto;
+          }
+
+          .sp-table {
+            min-width: 820px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .sp-header-inner {
+            height: auto;
+            padding-top: 14px;
+            padding-bottom: 14px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+          }
+
+          .sp-logo {
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .logout-btn {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .sp-stats-inner {
+            padding-top: 6px;
+            padding-bottom: 6px;
+          }
+
+          .stat-cell {
+            flex: 1 1 40%;
+            padding-right: 12px;
+            margin-right: 0;
+            border-right: none;
+          }
+
+          .sp-toolbar {
+            align-items: stretch;
+          }
+
+          .sp-search,
+          .filter-group,
+          .add-btn {
+            width: 100%;
+          }
+
+          .filter-group {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .filter-btn {
+            padding-left: 8px;
+            padding-right: 8px;
+          }
+
+          .add-btn {
+            justify-content: center;
+          }
+
+          .sp-main {
+            padding-top: 20px;
+            padding-bottom: 40px;
+          }
+        }
       `}</style>
 
       <div className="sp-root">
-        {/* Header */}
         <header className="sp-header">
           <div className="sp-header-inner">
             <div className="sp-logo">
@@ -523,7 +687,6 @@ export const StudentPage = () => {
           </div>
         </header>
 
-        {/* Stats banner */}
         <div className="sp-stats">
           <div className="sp-stats-inner">
             <div className="stat-cell">
@@ -545,7 +708,6 @@ export const StudentPage = () => {
           </div>
         </div>
 
-        {/* Main */}
         <main className="sp-main">
           {error && (
             <div className="sp-error">
@@ -557,7 +719,6 @@ export const StudentPage = () => {
             </div>
           )}
 
-          {/* Toolbar */}
           <div className="sp-toolbar">
             <div className="sp-search">
               <svg className="sp-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -565,7 +726,7 @@ export const StudentPage = () => {
               </svg>
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search by name, email or seat..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -619,24 +780,80 @@ export const StudentPage = () => {
                   Showing <em>{filtered.length}</em> of {students.length} records
                 </div>
               )}
-              <div className="sp-grid">
-                {filtered.map(student => (
-                  <div key={student.id} className="sp-card-wrap">
-                    {isDeleting === student.id && (
-                      <div className="sp-delete-overlay">
-                        <div className="sp-delete-inner">
-                          <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                          <span>Deleting...</span>
-                        </div>
-                      </div>
-                    )}
-                    <StudentCard
-                      student={student}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  </div>
-                ))}
+
+              <div className="sp-table-wrap">
+                <table className="sp-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '18%' }}>Student</th>
+                      <th style={{ width: '10%' }}>Seat</th>
+                      <th style={{ width: '12%' }}>Phone</th>
+                      <th style={{ width: '12%' }}>Recent Month</th>
+                      <th style={{ width: '12%' }}>Fee</th>
+                      <th style={{ width: '12%' }}>Status</th>
+                      <th style={{ width: '15%' }}>Latest Fee</th>
+                      <th style={{ width: '9%' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map(student => {
+                      const latestPayment = student.paymentHistory && student.paymentHistory.length
+                        ? [...student.paymentHistory].sort((a, b) => {
+                            const aKey = Number(a.year || 0) * 12 + Number(a.monthNumber || 0);
+                            const bKey = Number(b.year || 0) * 12 + Number(b.monthNumber || 0);
+                            return aKey - bKey;
+                          })[student.paymentHistory.length - 1]
+                        : null;
+
+                      return (
+                        <tr key={student.id} className="table-row" onClick={() => handleRowClick(student.id)}>
+                          <td>
+                            <div className="student-name">{student.name}</div>
+                            <div className="student-email">{student.email}</div>
+                          </td>
+                          <td>{student.seatNo}</td>
+                          <td>{student.phone}</td>
+                          <td>
+                            {student.paymentMonth && student.paymentYear
+                              ? `${student.paymentMonth}/${student.paymentYear}`
+                              : latestPayment ? `${latestPayment.monthNumber || ''}/${latestPayment.year || ''}` : 'N/A'}
+                          </td>
+                          <td>
+                            <strong>₨ {Number(student.totalFee || 0).toFixed(0)}</strong>
+                          </td>
+                          <td>
+                            <span className={`sp-status ${student.status === 'PAID' ? 'paid' : 'unpaid'}`}>
+                              {student.status}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="payment-pill">
+                              {latestPayment ? latestPayment.status : student.status}
+                            </span>
+                          </td>
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <div className="table-actions">
+                              <button className="icon-btn edit" onClick={() => handleEdit(student)} title="Edit">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                              </button>
+                              <button className="icon-btn delete" onClick={() => handleDelete(student.id)} title="Delete">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"/>
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                  <path d="M10 11v6M14 11v6"/>
+                                  <path d="M9 6V4h6v2"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </>
           )}

@@ -361,7 +361,7 @@ export const LoginPage = () => {
 
           <div>
             <h1 className="panel-title">
-              Laksh<br /><em>Library</em><br />System
+              Guru Ji<br /><em>Library</em><br />System
             </h1>
             <div className="panel-rule" />
             <p className="panel-desc">
